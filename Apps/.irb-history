@@ -1,0 +1,50 @@
+keyboard_enter_text "abcd"
+query("* marked:'Patient with this number doesn't exist.'")
+query("* marked:'Patient with this number doesn't exist.'")
+query("TextView id:'Patient with this number doesn't exist.'")
+query("* id:'Patient with this number doesn't exist.'")
+query("* id:'Patient with this number doesn't exist.'")
+exit
+start_test_server_in_background
+start_test_server_in_background
+exit
+start_test_server_in_background
+keyboard_enter_text "shreyas.patil91@gmail.com"
+keyboard_enter_text "abcd"
+wait_till_appears "Patient with this number doesn't exist."
+wait_for_text "Patient with this number doesn't exist."
+wait_for_text("Patient with this number doesn't exist.", timeout:10)
+wait_for_text("Patient with this number doesn't exist.", :timeout=>10)
+wait_for_text("Patient with this number", :timeout=>10)
+wait_for_text("Patient with this number", :timeout=>10)
+wait_for_text("Patient with this number", :timeout=>10)wait_for_elements_exist( "* marked:'Please sign in'", :timeout => 10)
+wait_for_elements_exist( "* marked:'Patient with this number doesn't exist.'", :timeout => 10)
+query("*")
+query("android.widget.TextView")
+query("android.widget.TextView", :text=>'Patint with this number doesn't exist.')
+query("android.widget.TextView", :text=>'Patint with this number doesn't exist.')
+query("android.widget.TextView, :text=>'Patint with this number doesn't exist.'")
+query("android.widget.TextView")[text]
+query("android.widget.TextView")['text']
+query("android.widget.TextView, 'text'")
+query("* id:'message'")
+query("* id:'message'")[0]
+query("* id:'message'")[0]
+query("* id:'message index:0 :text'")
+query("* id:'message index:0 :text'")
+query("* id:'message :index=0'")
+query("* id:'message index:0'")
+query("* id:'message'")[0]
+start_test_server_in_background
+keyboard_enter_text "shreyas.patil91@gmail.com"
+keyboard_enter_text "abcd"
+query("* id:'message'")[0]
+query("* id:'message'")[0]['text']
+var.eql? "Patient with this number doesn't exist."
+var = query("* id:'message'")[0]['text']
+var = query("* id:'message'")[0]['text']
+var.eql? "Patient with this number doesn't exist."
+toast = "Patient with this number doesn't exist."
+var = query("* id:'message'")[0]['text']
+var.eql? toast
+exit

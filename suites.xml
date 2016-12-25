@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project name="EHS_Automation" basedir=".">
+	<!-- Define Test Suites to copy specified Scripts for execution -->
+	<target name="Suite1_Doctor_Registration">
+		<copy todir="${build.dir}/features" >
+			<filelist id="Suite1_Doctor_Registration" dir="${scripts.dir}/${deviceType}">
+				<file name="doctor_registration.feature"/>
+			</filelist>
+		</copy>
+		<echo> /* Copied Scripts to Build directory */ </echo>
+	</target>
+
+	<target name="Suite2_Patient_Registration">
+		<copy todir="${build.dir}/features" >
+			<filelist id="Suite2_Patient_Registration" dir="${scripts.dir}/${deviceType}">
+				<file name="patient_registration.feature"/>
+			</filelist>
+		</copy>
+		<echo> /* Copied Scripts to Build directory */ </echo>
+	</target>
+
+	<target name="Suite3_Patient_History">
+		<copy todir="${build.dir}/features" >
+			<filelist id="Suite3_Patient_History" dir="${scripts.dir}/${deviceType}">
+				<file name="doctor_login_search_patient_history.feature"/>
+				<file name="doctor_login_successful_search_patient_history.feature"/>
+				<file name="doctor_gets_message_when_contact_not_provided.feature"/>
+				<file name="doctor_gets_message_when_patient_with_provided_contact_not_exists.feature"/>
+			</filelist>
+		</copy>
+		<echo> /* Copied Scripts to Build directory */ </echo>
+	</target>
+</project>

@@ -1,0 +1,185 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project basedir="." default="run" name="EHS_Automation">
+	<taskdef resource="net/sf/antcontrib/antcontrib.properties"/>
+	
+	<!-- Set Application type -->
+	<property name="appType" value="Native" />
+	
+	<!-- Create Time Stamp for usage in Report -->
+	<tstamp>
+      <format property="time" pattern="yyyy_MM_dd_hh_mm_ss"/>
+    </tstamp>
+
+	<!-- Set General Framework Properties -->
+	<property name="config.dir" value="Config" />
+	<property name="appDir" value="${user.dir}\Apps" />
+	<property name="appName" value="EHS.apk" />
+	<property name="scripts.dir" value="Scripts" />
+	<property name="steps.dir" value="StepDefinitions" />
+	<property name="object.dir" value="OR" />
+	<property name="build.dir" value="Build" />
+	<property name="screenshot.dir" value="Reports/screenshots" />
+
+	<!-- Fail the test if the parameters "device" or "suite" are not specified -->
+	<fail unless="device">You must specify the "device" property. Example: ant init run -Dsuite=TestSuite1 -Ddevice=MotoG_6.0.1</fail>
+	<fail unless="suite">You must specify the "suite" property. Example: ant init run -Dsuite=TestSuite1 -Ddevice=MotoG_6.0.1</fail>
+
+	<target name="checkOS">
+		<condition property="isWindows">
+			<os family="windows"/>
+		</condition>		
+		<condition property="isMacOs">
+			<os family="mac"/>
+		</condition>
+	</target>
+
+	<!-- Clean the build directory before execution -->
+	<target name="delete-dir" depends="checkOS">
+		<delete dir="${build.dir}/features" />
+		<echo> /* Deleted existing Build Directory */ </echo>
+	</target>
+
+	<!-- Create Build Directories -->
+	<target name="create-build-dir">
+		<mkdir dir="${build.dir}" />
+		<mkdir dir="${build.dir}/features" />
+		<mkdir dir="${build.dir}/features/step_definitions" />
+		<mkdir dir="${build.dir}/features/support" />
+		<echo> /* Created Build Directories */ </echo>
+	</target>
+
+	<!-- Copy Step Definitions-->
+	<target name="getLibraries">
+		<copy todir="${build.dir}/features/step_definitions" >
+			<fileset dir="${steps.dir}/${deviceType}/${appType}"/>
+		</copy>
+		<copy todir="${build.dir}/features/support" >
+			<fileset dir="${steps.dir}/${deviceType}/support"/>
+		</copy>
+		<echo> /* Copied Step Definitions to Build directory */ </echo>
+	</target>
+
+	<!-- To insert Pause wherever required -->
+	<target name="pause">
+		<input message="Press ENTER key to continue..." />
+	</target>
+	
+	<!-- Setting up Build directory for execution -->
+	<target name="init">
+		<antcall target="delete-dir" />
+		<antcall target="create-build-dir" />
+	</target>
+
+	<!-- Get All Device Details -->
+	<target name="run">
+		<!-- Split Device Details and create property for each device -->
+		<script language="ruby" classpath="${config.dir}\jruby.jar">
+			mdevices = $project.getProperty("device").split("##");
+			for i in 0..mdevices.length-1
+				j=i+1;
+				$project.setUserProperty("device_"+j.to_s, mdevices[i]);
+			end
+			$project.setUserProperty("totdevices", mdevices.length.to_s);
+		</script>
+
+		<!-- Create Property Set for Devices -->
+		<propertyset id="devices">
+			<propertyref prefix="device_"/>
+		</propertyset>
+
+		<!-- Create reference property to include devices and display total devices -->
+		<property name="allDevices" refid="devices"/>
+		<echo>Total Devices: ${totdevices} </echo>
+
+		<!-- Loop execution task for each device -->
+		<foreach target="execute" param="mDevice" list="${allDevices}"/>
+	</target>
+
+	<!-- Execution Task -->
+	<target name="execute">
+	
+		<!-- Extract actual device name from "device_?=<DeviceName>" -->
+		<propertyregex property="eDevice"
+				  input="${mDevice}"
+				  regexp="(.*)="
+				  replace=""
+				  casesensitive="false" />
+
+		<!-- Check whether device property file exist and fail if otherwise -->
+		<available property="device.prop.file.exists" file="${config.dir}\${eDevice}.properties"/> 
+		<fail unless="device.prop.file.exists">Cannot find ${config.dir}\${eDevice}.properties file.</fail> 
+
+		<!-- Load Property File for specified device, show Device Name & Command -->
+		<property file="${config.dir}\${eDevice}.properties"/> 
+		
+		<!-- Copy Scripts and Device Specific Step Definitions in Build -->
+		<ant antfile="suites.xml" target="${suite}" inheritall="true" />
+		<antcall target="getLibraries" />
+
+		<!-- Call Device Speciifc Run Target -->
+		<antcall target="run_${deviceType}" />
+	</target>
+
+	<target name="run_Android">
+		<if>
+			<contains string="${os.name}" substring="Windows" />
+			<then>
+				<!-- Set Report Property and Create unique Report Folder for execution -->
+				<property name="reports.dir" value="${user.dir}\Reports\${suite}_${eDevice}_${time}" />
+				<mkdir dir="${reports.dir}" />
+
+				<echo>Executing on: ${os.name}</echo>
+				<echo>Executing on ${deviceType} Device: ${eDevice}</echo>
+				<echo>Executing command: "calabash-android run ${appDir}\${appName} ADB_DEVICE_ARG=${device.id} --format html --out ${reports.dir}\${suite}_${eDevice}_${time}.html SCREENSHOT_PATH=${reports.dir}\"</echo>
+				
+				<!-- Perform actual execution in separate window -->
+				<exec executable="cmd" dir="${build.dir}">
+					<arg line= "/c start calabash-android run ${appDir}\${appName} ADB_DEVICE_ARG=${device.id} --format html --out ${reports.dir}\${suite}_${eDevice}_${time}.html SCREENSHOT_PATH=${reports.dir}\"/>
+				</exec>
+			</then>
+			<elseif>
+				<contains string="${os.name}" substring="Mac" />
+				<then>
+					<echo>Executing on: ${os.name}</echo>
+					<echo>Executing on ${deviceType} Device: ${eDevice}</echo>
+					<echo>Executing command: "calabash-android run ${appDir}\${appName} ADB_DEVICE_ARG=${device.id} --format html --out ${reports.dir}\Report_${eDevice}_${time}.html"</echo>
+
+					<echo>Execution on ${os.name} is still worked upon</echo>
+				</then>
+			</elseif>
+			<else>
+				<echo message="Current OS is not supported" />
+			</else>
+		</if>
+	</target>
+
+	<target name="run_iOS">
+		<if>
+			<contains string="${os.name}" substring="Windows" />
+			<then>
+				<echo>Executing on: ${os.name}</echo>
+				<echo>Executing on ${deviceType} Device: ${eDevice}</echo>
+				<echo>Execution of iOS scripts from Windows is not supported. Please execute on a Mac machine</echo>
+			</then>
+			<elseif>
+				<contains string="${os.name}" substring="Mac" />
+				<then>
+					<echo>Executing on: ${os.name}</echo>
+					<echo>Executing on ${deviceType} Device: ${eDevice}</echo>
+					<echo>Executing command: "command is not ready yet"</echo>
+
+					<echo>Execution on ${os.name} is still worked upon</echo>
+				</then>
+			</elseif>
+			<else>
+				<echo message="Current OS is not supported" />
+			</else>
+		</if>
+	</target>
+
+	<target name="openReport">
+		<exec executable="cmd">
+			<arg line= "/c ${reports.dir}\${suite}_${eDevice}_${time}.html" />
+		</exec>
+	</target>
+</project>
